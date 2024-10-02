@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using NAudio.Vorbis;
 using NAudio.Wave;
 using System;
 using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace WaveTracker.UI {
         private int width = 500;
         private int height = 320;
         private WaveOutEvent previewOut;
-        private AudioFileReader reader;
+        private WaveStream reader;
 
         private enum SortingMethod { ByName, ByType };
 
@@ -186,7 +187,11 @@ namespace WaveTracker.UI {
             if (App.Settings.SamplesWaves.PreviewSamplesInBrowser) {
                 if (File.Exists(entriesInDirectory[selectedFileIndex])) {
                     try {
-                        reader = new AudioFileReader(entriesInDirectory[selectedFileIndex]);
+                        if (Path.GetExtension(entriesInDirectory[selectedFileIndex]).ToLower() == ".ogg") {
+                            reader = new VorbisWaveReader(entriesInDirectory[selectedFileIndex]);
+                        } else {
+                            reader = new AudioFileReader(entriesInDirectory[selectedFileIndex]);
+                        }
                         if (loopPreview.Value) {
                             LoopStream loop = new LoopStream(reader);
                             previewOut.Init(loop);
@@ -239,7 +244,8 @@ namespace WaveTracker.UI {
                             if (string.Compare(ext, ".wav", true) == 0 ||
                                 string.Compare(ext, ".mp3", true) == 0 ||
                                 string.Compare(ext, ".flac", true) == 0 ||
-                                string.Compare(ext, ".aiff", true) == 0) {
+                                string.Compare(ext, ".aiff", true) == 0 ||
+                                string.Compare(ext, ".ogg", true) == 0) {
                                 continue;
                             }
                         }
@@ -372,7 +378,7 @@ namespace WaveTracker.UI {
                 DrawRoundedRect(0, 0, width, height, UIColors.panel);
                 DrawRect(1, 0, width - 2, 1, Color.White);
                 DrawRect(0, 1, width, 26, Color.White);
-                Write("Choose sample... (.wav, .mp3, .flac)", 4, 1, UIColors.panelTitle);
+                Write("Choose sample... (.wav, .mp3, .flac, .ogg)", 4, 1, UIColors.panelTitle);
                 DrawList();
                 backButton.Draw();
                 ok.Draw();
@@ -385,7 +391,7 @@ namespace WaveTracker.UI {
                 if (SelectedAnAudioFile) {
                     // write file name
                     if (reader != null) {
-                        Write(Helpers.TrimTextToWidth(105, Path.GetFileName(reader.FileName)), width - 104, 85, UIColors.label);
+                        Write(Helpers.TrimTextToWidth(105, Path.GetFileName(entriesInDirectory[selectedFileIndex])), width - 104, 85, UIColors.label);
                         Write(reader.WaveFormat.Channels == 1 ? "Mono" : "Stereo", width - 104, 95, UIColors.label);
                         Write(reader.WaveFormat.SampleRate + " Hz", width - 104, 105, UIColors.label);
                         Write(reader.TotalTime.TotalSeconds + " sec", width - 104, 115, UIColors.label);

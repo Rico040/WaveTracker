@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using NAudio.Vorbis;
 using NAudio.Wave;
 using System;
 using System.Collections.Generic;
@@ -377,7 +378,12 @@ namespace WaveTracker {
             List<short> LChannel = [];
             List<short> RChannel = [];
             try {
-                AudioFileReader Nreader = new AudioFileReader(filepath);
+                WaveStream Nreader;
+                if (Path.GetExtension(filepath).ToLower() == ".ogg") {
+                    Nreader = new VorbisWaveReader(filepath);
+                } else {
+                    Nreader = new AudioFileReader(filepath);
+                }
                 if (Nreader.Length == 0) {
                     Dialogs.OpenMessageDialog("Could not load sample: " + Path.GetFileName(filepath), MessageDialog.Icon.Error, "OK");
                     throw new Exception("Failed to read audio file");
@@ -387,7 +393,7 @@ namespace WaveTracker {
                 fileSampleRate = Nreader.WaveFormat.SampleRate;
                 ISampleProvider isp;
                 WaveFormat desiredFormat = new WaveFormat(fileSampleRate, 16, Nreader.WaveFormat.Channels);
-                IWaveProvider waveProvider = Nreader.ToWaveProvider();
+                // IWaveProvider waveProvider = Nreader.ToWaveProvider();
                 using (MediaFoundationResampler resampler = new MediaFoundationResampler(Nreader, desiredFormat)) {
                     isp = resampler.ToSampleProvider();
                 }
